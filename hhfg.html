@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="CSS/style.css" />
+    <title>Pencatatan Keuangan</title>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>💰 Pencatatan Keuangan</h1>
+        <p>Kelola keuangan Anda dengan mudah dan efisien</p>
+      </div>
+
+      <div class="content">
+        <!-- Manajemen Saldo Bank Digital -->
+        <div class="form-section fade-in">
+          <h2>💳 Manajemen Saldo Bank Digital</h2>
+          <div class="form-group">
+            <div class="input-group">
+              <label for="bankAccount">Pilih Akun</label>
+              <select id="bankAccount">
+                <option value="">Pilih Bank/E-Wallet</option>
+                <option value="DANA">DANA</option>
+                <option value="GoPay">GoPay</option>
+                <option value="ShopeePay">ShopeePay</option>
+                <option value="OVO">OVO</option>
+                <option value="SeaBank">SeaBank</option>
+                <option value="Bank Jatim">Bank Jatim</option>
+                <option value="BCA">BCA</option>
+                <option value="BRI">BRI</option>
+                <option value="BNI">BNI</option>
+                <option value="Mandiri">Mandiri</option>
+                <option value="Cash">Tunai</option>
+                <option value="Custom">Lainnya...</option>
+              </select>
+            </div>
+            <div class="input-group" id="customBankGroup" style="display: none">
+              <label for="customBank">Nama Bank/E-Wallet</label>
+              <input
+                type="text"
+                id="customBank"
+                placeholder="Masukkan nama bank/e-wallet"
+              />
+            </div>
+            <div class="input-group">
+              <label for="currentBalance">Saldo Saat Ini (Rp)</label>
+              <input
+                type="number"
+                id="currentBalance"
+                placeholder="0"
+                min="0"
+                step="1000"
+              />
+            </div>
+          </div>
+          <div class="actions">
+            <button
+              type="button"
+              class="btn btn-success"
+              onclick="updateBankBalance()"
+            >
+              💰 Update Saldo
+            </button>
+            <button type="button" class="btn btn-info" onclick="addNewBank()">
+              ➕ Tambah Bank Baru
+            </button>
+          </div>
+        </div>
+
+        <!-- Tampilan Saldo Bank -->
+        <div class="bank-balances fade-in" id="bankBalancesSection">
+          <div class="form-section">
+            <h2>💳 Saldo Bank & E-Wallet</h2>
+            <div class="bank-grid" id="bankGrid">
+              <!-- Bank cards will be populated here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Input -->
+        <div class="form-section fade-in">
+          <h2>📝 Tambah Transaksi</h2>
+          <form id="transactionForm">
+            <div class="form-group">
+              <div class="input-group">
+                <label for="date">Tanggal</label>
+                <input type="date" id="date" required />
+              </div>
+              <div class="input-group">
+                <label for="type">Jenis Transaksi</label>
+                <select id="type" required>
+                  <option value="">Pilih Jenis</option>
+                  <option value="income">Pemasukan</option>
+                  <option value="expense">Pengeluaran</option>
+                  <option value="transfer">Transfer Antar Akun</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label for="category">Kategori</label>
+                <select id="category" required>
+                  <option value="">Pilih Kategori</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label for="paymentMethod">Metode Pembayaran</label>
+                <select id="paymentMethod" required>
+                  <option value="">Pilih Akun</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group" id="transferGroup" style="display: none">
+              <div class="input-group">
+                <label for="fromAccount">Dari Akun</label>
+                <select id="fromAccount">
+                  <option value="">Pilih Akun Asal</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label for="toAccount">Ke Akun</label>
+                <select id="toAccount">
+                  <option value="">Pilih Akun Tujuan</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="input-group">
+                <label for="amount">Jumlah (Rp)</label>
+                <input
+                  type="number"
+                  id="amount"
+                  placeholder="0"
+                  required
+                  min="0"
+                  step="1000"
+                />
+              </div>
+              <div class="input-group">
+                <label for="description">Deskripsi</label>
+                <textarea
+                  id="description"
+                  rows="3"
+                  placeholder="Deskripsi transaksi..."
+                ></textarea>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button type="submit" class="btn btn-success">
+                ✅ Tambah Transaksi
+              </button>
+              <button
+                type="button"
+                class="btn btn-info"
+                onclick="downloadExcel()"
+              >
+                📊 Download Excel
+              </button>
+              <button
+                type="button"
+                class="btn btn-info"
+                onclick="downloadCSV()"
+              >
+                📋 Download CSV
+              </button>
+              <button
+                type="button"
+                class="btn btn-danger"
+                onclick="clearAllData()"
+              >
+                🗑️ Hapus Semua Data
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="form-section fade-in">
+          <h2>🔍 Filter Laporan</h2>
+          <div class="form-group">
+            <div class="input-group">
+              <label for="filterType">Jenis Filter</label>
+              <select id="filterType" onchange="toggleFilterOptions()">
+                <option value="all">Semua Data</option>
+                <option value="dateRange">Rentang Tanggal</option>
+                <option value="month">Per Bulan</option>
+                <option value="year">Per Tahun</option>
+              </select>
+            </div>
+            <div class="input-group" id="dateRangeFilter" style="display: none">
+              <label for="startDate">Dari Tanggal</label>
+              <input type="date" id="startDate" onchange="applyFilter()" />
+            </div>
+            <div
+              class="input-group"
+              id="dateRangeFilter2"
+              style="display: none"
+            >
+              <label for="endDate">Sampai Tanggal</label>
+              <input type="date" id="endDate" onchange="applyFilter()" />
+            </div>
+            <div class="input-group" id="monthFilter" style="display: none">
+              <label for="filterMonth">Pilih Bulan</label>
+              <select id="filterMonth" onchange="applyFilter()">
+                <option value="">Pilih Bulan</option>
+              </select>
+            </div>
+            <div class="input-group" id="yearFilter" style="display: none">
+              <label for="filterYear">Pilih Tahun</label>
+              <select id="filterYear" onchange="applyFilter()">
+                <option value="">Pilih Tahun</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn btn-info" onclick="resetFilter()">
+              🔄 Reset Filter
+            </button>
+            <button
+              type="button"
+              class="btn btn-success"
+              onclick="downloadFilteredData()"
+            >
+              📊 Download Data Terfilter
+            </button>
+          </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary fade-in">
+          <div class="summary-card">
+            <h3>Total Pemasukan</h3>
+            <div class="amount income" id="totalIncome">Rp 0</div>
+            <small
+              id="periodIncome"
+              style="color: #7f8c8d; font-size: 0.8rem"
+            ></small>
+          </div>
+          <div class="summary-card">
+            <h3>Total Pengeluaran</h3>
+            <div class="amount expense" id="totalExpense">Rp 0</div>
+            <small
+              id="periodExpense"
+              style="color: #7f8c8d; font-size: 0.8rem"
+            ></small>
+          </div>
+          <div class="summary-card">
+            <h3>Saldo</h3>
+            <div class="amount balance" id="totalBalance">Rp 0</div>
+            <small
+              id="periodBalance"
+              style="color: #7f8c8d; font-size: 0.8rem"
+            ></small>
+          </div>
+        </div>
+
+        <!-- Tabel Transaksi -->
+        <div class="table-container fade-in">
+          <div class="table-header">
+            <h2>📊 Riwayat Transaksi</h2>
+            <span id="totalTransactions">0 transaksi</span>
+          </div>
+          <div style="overflow-x: auto">
+            <table id="transactionTable">
+              <thead>
+                <tr>
+                  <th>Tanggal</th>
+                  <th>Jenis</th>
+                  <th>Kategori</th>
+                  <th>Metode Pembayaran</th>
+                  <th>Deskripsi</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="transactionBody">
+                <tr>
+                  <td colspan="6" class="empty-state">
+                    <div>
+                      <div style="font-size: 3rem; margin-bottom: 10px">📝</div>
+                      <h3>Belum ada transaksi</h3>
+                      <p>Mulai dengan menambahkan transaksi pertama Anda</p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="JS/script.js"></script>
+  </body>
+</html>
