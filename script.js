@@ -1,11 +1,9 @@
-// Data storage
 let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
 let bankAccounts = JSON.parse(localStorage.getItem("bankAccounts")) || [];
 let filteredTransactions = [];
 let editingId = null;
 let currentFilter = { type: "all" };
 
-// Categories
 const categories = {
   income: ["Gaji", "Bonus", "Freelance", "Investasi", "Hadiah", "Lainnya"],
   expense: [
@@ -21,38 +19,30 @@ const categories = {
   transfer: ["Transfer Antar Akun"],
 };
 
-// Initialize
 document.addEventListener("DOMContentLoaded", function () {
-  // Set today's date
   document.getElementById("date").valueAsDate = new Date();
 
-  // Initialize default bank accounts if empty
   initializeDefaultBanks();
 
-  // Initialize filter options
   initializeFilterOptions();
 
-  // Load bank balances
   loadBankBalances();
 
-  // Update payment method options
   updatePaymentMethods();
 
-  // Load transactions
   applyFilter();
 
-  // Form submission
+  updateTransferAccountOptions();
+
   document
     .getElementById("transactionForm")
     .addEventListener("submit", handleSubmit);
 
-  // Type change handler
   document.getElementById("type").addEventListener("change", function () {
     updateCategories();
     toggleTransferFields();
   });
 
-  // Bank account change handler
   document
     .getElementById("bankAccount")
     .addEventListener("change", function () {
@@ -61,13 +51,10 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
-/**
- * Initializes default bank accounts if no accounts are stored in localStorage.
- */
 function initializeDefaultBanks() {
   if (bankAccounts.length === 0) {
     bankAccounts = [
-      { name: "DANA", balance: 10000 },
+      { name: "DANA", balance: 0 },
       { name: "GoPay", balance: 0 },
       { name: "ShopeePay", balance: 0 },
       { name: "OVO", balance: 0 },
@@ -83,16 +70,10 @@ function initializeDefaultBanks() {
   }
 }
 
-/**
- * Saves the current bank accounts array to localStorage.
- */
 function saveBankAccounts() {
   localStorage.setItem("bankAccounts", JSON.stringify(bankAccounts));
 }
 
-/**
- * Loads and displays bank balances in the bank grid.
- */
 function loadBankBalances() {
   const bankGrid = document.getElementById("bankGrid");
   bankGrid.innerHTML = "";
@@ -119,12 +100,10 @@ function loadBankBalances() {
       </div>
   `;
   });
-  updatePaymentMethods(); // Update payment methods whenever bank balances are loaded
+  updatePaymentMethods();
+  updateTransferAccountOptions();
 }
 
-/**
- * Updates the balance of an existing bank account or adds a new custom bank account.
- */
 function updateBankBalance() {
   const bankName = document.getElementById("bankAccount").value;
   const customBank = document.getElementById("customBank").value.trim();
@@ -164,9 +143,6 @@ function updateBankBalance() {
   document.getElementById("customBankGroup").style.display = "none";
 }
 
-/**
- * Adds a new bank account with an initial balance of 0.
- */
 function addNewBank() {
   const customBank = document.getElementById("customBank").value.trim();
   if (!customBank) {
@@ -187,27 +163,19 @@ function addNewBank() {
   loadBankBalances();
   alert(`${customBank} berhasil ditambahkan.`);
   document.getElementById("customBank").value = "";
-  document.getElementById("bankAccount").value = ""; // Reset dropdown
+  document.getElementById("bankAccount").value = "";
   document.getElementById("customBankGroup").style.display = "none";
 }
 
-/**
- * Populates the bank account details into the update form for editing.
- * @param {string} name - The name of the bank account to edit.
- */
 function editBank(name) {
   const bank = bankAccounts.find((b) => b.name === name);
   if (bank) {
     document.getElementById("bankAccount").value = bank.name;
     document.getElementById("currentBalance").value = bank.balance;
-    document.getElementById("customBankGroup").style.display = "none"; // Hide custom input if editing existing
+    document.getElementById("customBankGroup").style.display = "none";
   }
 }
 
-/**
- * Deletes a bank account after confirmation.
- * @param {string} name - The name of the bank account to delete.
- */
 function deleteBank(name) {
   if (
     confirm(
@@ -221,10 +189,6 @@ function deleteBank(name) {
   }
 }
 
-/**
- * Handles the form submission for adding or updating a transaction.
- * @param {Event} e - The submit event.
- */
 function handleSubmit(e) {
   e.preventDefault();
 
@@ -259,8 +223,6 @@ function handleSubmit(e) {
     formData.fromAccount = fromAccount;
     formData.toAccount = toAccount;
     formData.paymentMethod = `${formData.fromAccount} → ${formData.toAccount}`;
-
-    // Update bank balances for transfer
     updateBankBalanceForTransaction(formData.fromAccount, -formData.amount);
     updateBankBalanceForTransaction(formData.toAccount, formData.amount);
   } else {
@@ -270,8 +232,6 @@ function handleSubmit(e) {
       return;
     }
     formData.paymentMethod = paymentMethod;
-
-    // Update bank balance for income/expense
     const multiplier = type === "income" ? 1 : -1;
     updateBankBalanceForTransaction(
       formData.paymentMethod,
@@ -280,20 +240,18 @@ function handleSubmit(e) {
   }
 
   if (editingId) {
-    // Update existing transaction
     const index = transactions.findIndex((t) => t.id === editingId);
     if (index !== -1) {
-      // Revert old balance changes before applying new ones if editing
       const oldTransaction = transactions[index];
       if (oldTransaction.type === "transfer") {
         updateBankBalanceForTransaction(
           oldTransaction.fromAccount,
           oldTransaction.amount
-        ); // Add back to fromAccount
+        );
         updateBankBalanceForTransaction(
           oldTransaction.toAccount,
           -oldTransaction.amount
-        ); // Subtract from toAccount
+        );
       } else {
         const oldMultiplier = oldTransaction.type === "income" ? -1 : 1;
         updateBankBalanceForTransaction(
@@ -301,7 +259,6 @@ function handleSubmit(e) {
           oldTransaction.amount * oldMultiplier
         );
       }
-
       transactions[index] = { ...formData, id: editingId };
     }
     editingId = null;
@@ -309,7 +266,6 @@ function handleSubmit(e) {
       "✅ Tambah Transaksi";
     alert("Transaksi berhasil diperbarui!");
   } else {
-    // Add new transaction
     const transaction = {
       ...formData,
       id: Date.now().toString(),
@@ -319,17 +275,12 @@ function handleSubmit(e) {
   }
 
   saveTransactions();
-  saveBankAccounts(); // Save bank accounts after balance updates
-  loadBankBalances(); // Reload bank balances to reflect changes
+  saveBankAccounts();
+  loadBankBalances();
   applyFilter();
   resetForm();
 }
 
-/**
- * Updates the balance of a specific bank account.
- * @param {string} bankName - The name of the bank account.
- * @param {number} amount - The amount to add or subtract from the balance.
- */
 function updateBankBalanceForTransaction(bankName, amount) {
   const bank = bankAccounts.find((b) => b.name === bankName);
   if (bank) {
@@ -341,33 +292,22 @@ function updateBankBalanceForTransaction(bankName, amount) {
   }
 }
 
-/**
- * Saves the current transactions array to localStorage.
- */
 function saveTransactions() {
   localStorage.setItem("transactions", JSON.stringify(transactions));
 }
 
-/**
- * Resets the transaction form to its initial state.
- */
 function resetForm() {
   document.getElementById("transactionForm").reset();
   document.getElementById("date").valueAsDate = new Date();
   document.getElementById("category").innerHTML =
     '<option value="">Pilih Kategori</option>';
   document.getElementById("transferGroup").style.display = "none";
-  document.getElementById("paymentMethod").style.display = "block"; // Ensure payment method is visible
+  document.getElementById("paymentMethod").style.display = "block";
   document.querySelector('label[for="paymentMethod"]').style.display = "block";
   updatePaymentMethods();
-  updateCategories(); // Reset categories based on default type (income)
+  updateCategories();
 }
 
-/**
- * Formats a date string into a localized, readable format.
- * @param {string} dateString - The date string (e.g., "YYYY-MM-DD").
- * @returns {string} The formatted date string.
- */
 function formatDate(dateString) {
   const date = new Date(dateString);
   return date.toLocaleDateString("id-ID", {
@@ -378,11 +318,6 @@ function formatDate(dateString) {
   });
 }
 
-/**
- * Formats a number into Indonesian Rupiah currency format.
- * @param {number} amount - The amount to format.
- * @returns {string} The formatted currency string.
- */
 function formatCurrency(amount) {
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
@@ -391,9 +326,6 @@ function formatCurrency(amount) {
   }).format(amount);
 }
 
-/**
- * Updates the category dropdown based on the selected transaction type (income, expense, transfer).
- */
 function updateCategories() {
   const type = document.getElementById("type").value;
   const categorySelect = document.getElementById("category");
@@ -409,29 +341,24 @@ function updateCategories() {
   }
 }
 
-/**
- * Toggles the visibility of transfer-specific fields based on the transaction type.
- */
 function toggleTransferFields() {
   const type = document.getElementById("type").value;
   const transferGroup = document.getElementById("transferGroup");
-  const paymentMethodGroup = document
-    .getElementById("paymentMethod")
-    .closest(".input-group");
+  const paymentMethod = document.getElementById("paymentMethod");
+  const paymentMethodGroup = paymentMethod.closest(".input-group");
 
   if (type === "transfer") {
     transferGroup.style.display = "flex";
-    paymentMethodGroup.style.display = "none"; // Hide payment method for transfers
+    paymentMethodGroup.style.display = "none";
+    paymentMethod.removeAttribute("required");
     updateTransferAccountOptions();
   } else {
     transferGroup.style.display = "none";
-    paymentMethodGroup.style.display = "block"; // Show payment method for income/expense
+    paymentMethodGroup.style.display = "block";
+    paymentMethod.setAttribute("required", "required");
   }
 }
 
-/**
- * Populates the payment method dropdown with available bank accounts.
- */
 function updatePaymentMethods() {
   const paymentMethodSelect = document.getElementById("paymentMethod");
   paymentMethodSelect.innerHTML = '<option value="">Pilih Akun</option>';
@@ -443,9 +370,6 @@ function updatePaymentMethods() {
   });
 }
 
-/**
- * Populates the 'From Account' and 'To Account' dropdowns for transfer transactions.
- */
 function updateTransferAccountOptions() {
   const fromAccountSelect = document.getElementById("fromAccount");
   const toAccountSelect = document.getElementById("toAccount");
@@ -466,10 +390,12 @@ function updateTransferAccountOptions() {
   });
 }
 
-/**
- * Applies the current filter settings to the transactions and updates the display.
- */
 function applyFilter() {
+  currentFilter.startDate = document.getElementById("startDate").value;
+  currentFilter.endDate = document.getElementById("endDate").value;
+  currentFilter.month = document.getElementById("filterMonth").value;
+  currentFilter.year = document.getElementById("filterYear").value;
+
   let tempTransactions = [...transactions];
 
   const filterType = currentFilter.type;
@@ -502,15 +428,14 @@ function applyFilter() {
   filteredTransactions = tempTransactions.sort(
     (a, b) => new Date(b.date) - new Date(a.date)
   );
+
   displayTransactions();
   updateSummary();
 }
 
-/**
- * Toggles the visibility of filter options based on the selected filter type.
- */
 function toggleFilterOptions() {
   const filterType = document.getElementById("filterType").value;
+
   document.getElementById("dateRangeFilter").style.display = "none";
   document.getElementById("dateRangeFilter2").style.display = "none";
   document.getElementById("monthFilter").style.display = "none";
@@ -525,24 +450,15 @@ function toggleFilterOptions() {
     document.getElementById("yearFilter").style.display = "block";
   }
 
-  // Update currentFilter object and apply filter
   currentFilter.type = filterType;
-  currentFilter.startDate = document.getElementById("startDate").value;
-  currentFilter.endDate = document.getElementById("endDate").value;
-  currentFilter.month = document.getElementById("filterMonth").value;
-  currentFilter.year = document.getElementById("filterYear").value;
   applyFilter();
 }
 
-/**
- * Initializes the month and year options for the filter dropdowns.
- */
 function initializeFilterOptions() {
   const monthSelect = document.getElementById("filterMonth");
   const yearSelect = document.getElementById("filterYear");
   const currentYear = new Date().getFullYear();
 
-  // Populate months
   const months = [
     { value: "1", name: "Januari" },
     { value: "2", name: "Februari" },
@@ -564,7 +480,6 @@ function initializeFilterOptions() {
     monthSelect.appendChild(option);
   });
 
-  // Populate years (e.g., current year - 5 to current year + 1)
   for (let i = currentYear - 5; i <= currentYear + 1; i++) {
     const option = document.createElement("option");
     option.value = i;
@@ -573,9 +488,6 @@ function initializeFilterOptions() {
   }
 }
 
-/**
- * Displays the filtered transactions in the transaction table.
- */
 function displayTransactions() {
   const transactionBody = document.getElementById("transactionBody");
   transactionBody.innerHTML = "";
@@ -623,27 +535,22 @@ function displayTransactions() {
           }')">🗑️</button>
       </td>
   `;
-    // Add amount column for better visibility
-    const amountCell = row.insertCell(4); // Insert before description
+    const amountCell = row.insertCell(4);
     amountCell.textContent = formatCurrency(transaction.amount);
     amountCell.style.color = getTransactionColor(transaction.type);
     amountCell.style.fontWeight = "bold";
   });
 
-  // Adjust table header to include 'Jumlah'
   const tableHeader = document.querySelector("#transactionTable thead tr");
   if (
     !tableHeader.querySelector("th:nth-child(5)").textContent.includes("Jumlah")
   ) {
     const amountHeader = document.createElement("th");
     amountHeader.textContent = "Jumlah";
-    tableHeader.insertBefore(amountHeader, tableHeader.children[4]); // Insert before Description
+    tableHeader.insertBefore(amountHeader, tableHeader.children[4]);
   }
 }
 
-/**
- * Updates the summary cards (Total Income, Total Expense, Total Balance).
- */
 function updateSummary() {
   let totalIncome = 0;
   let totalExpense = 0;
@@ -668,7 +575,6 @@ function updateSummary() {
   document.getElementById("totalBalance").textContent =
     formatCurrency(overallBalance);
 
-  // Update period text for summary
   let periodText = "";
   if (currentFilter.type === "all") {
     periodText = "Semua Waktu";
@@ -694,22 +600,18 @@ function updateSummary() {
   document.getElementById("periodBalance").textContent = "Total Saldo Akun";
 }
 
-/**
- * Sets the form fields for editing an existing transaction.
- * @param {string} id - The ID of the transaction to edit.
- */
 function editTransaction(id) {
   const transaction = transactions.find((t) => t.id === id);
   if (transaction) {
     editingId = id;
     document.getElementById("date").value = transaction.date;
     document.getElementById("type").value = transaction.type;
-    updateCategories(); // Update categories first
+    updateCategories();
     document.getElementById("category").value = transaction.category;
     document.getElementById("amount").value = transaction.amount;
     document.getElementById("description").value = transaction.description;
 
-    toggleTransferFields(); // Adjust visibility based on type
+    toggleTransferFields();
 
     if (transaction.type === "transfer") {
       document.getElementById("fromAccount").value = transaction.fromAccount;
@@ -721,19 +623,14 @@ function editTransaction(id) {
 
     document.querySelector('button[type="submit"]').textContent =
       "💾 Update Transaksi";
-    window.scrollTo({ top: 0, behavior: "smooth" }); // Scroll to top to see the form
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 }
 
-/**
- * Deletes a transaction and reverts its impact on bank balances.
- * @param {string} id - The ID of the transaction to delete.
- */
 function deleteTransaction(id) {
   if (confirm("Apakah Anda yakin ingin menghapus transaksi ini?")) {
     const transactionToDelete = transactions.find((t) => t.id === id);
     if (transactionToDelete) {
-      // Revert balance changes
       if (transactionToDelete.type === "income") {
         updateBankBalanceForTransaction(
           transactionToDelete.paymentMethod,
@@ -748,26 +645,23 @@ function deleteTransaction(id) {
         updateBankBalanceForTransaction(
           transactionToDelete.fromAccount,
           transactionToDelete.amount
-        ); // Add back to fromAccount
+        );
         updateBankBalanceForTransaction(
           transactionToDelete.toAccount,
           -transactionToDelete.amount
-        ); // Subtract from toAccount
+        );
       }
     }
 
     transactions = transactions.filter((t) => t.id !== id);
     saveTransactions();
-    saveBankAccounts(); // Save bank accounts after balance updates
-    loadBankBalances(); // Reload bank balances to reflect changes
+    saveBankAccounts();
+    loadBankBalances();
     applyFilter();
     alert("Transaksi berhasil dihapus!");
   }
 }
 
-/**
- * Downloads the filtered transaction data as an Excel (XLSX) file.
- */
 function downloadExcel() {
   if (filteredTransactions.length === 0) {
     alert("Tidak ada data untuk diunduh.");
@@ -798,8 +692,6 @@ function downloadExcel() {
   ];
 
   const ws = XLSX.utils.json_to_sheet(data, { header });
-
-  // Auto width kolom
   const wscols = [
     { wch: 15 },
     { wch: 15 },
@@ -817,9 +709,6 @@ function downloadExcel() {
   alert("Data berhasil diunduh sebagai Excel!");
 }
 
-/**
- * Downloads the filtered transaction data as a CSV file.
- */
 function downloadCSV() {
   if (filteredTransactions.length === 0) {
     alert("Tidak ada data untuk diunduh.");
@@ -844,7 +733,7 @@ function downloadCSV() {
     t.category,
     t.amount,
     t.paymentMethod,
-    `"${(t.description || "").replace(/"/g, '""')}"`, // Escape double quotes for CSV
+    `"${(t.description || "").replace(/"/g, '""')}"`,
   ]);
 
   let csvContent = headers.join(",") + "\n";
@@ -857,7 +746,6 @@ function downloadCSV() {
   });
   const link = document.createElement("a");
   if (link.download !== undefined) {
-    // Feature detection for download attribute
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
     link.setAttribute("download", "Laporan_Keuangan.csv");
@@ -873,9 +761,6 @@ function downloadCSV() {
   }
 }
 
-/**
- * Clears all transaction and bank account data from localStorage after confirmation.
- */
 function clearAllData() {
   if (
     confirm(
@@ -888,7 +773,7 @@ function clearAllData() {
     bankAccounts = [];
     editingId = null;
     currentFilter = { type: "all" };
-    initializeDefaultBanks(); // Re-initialize default banks
+    initializeDefaultBanks();
     loadBankBalances();
     applyFilter();
     resetForm();
@@ -896,9 +781,6 @@ function clearAllData() {
   }
 }
 
-/**
- * Resets the filter to "All Data" and re-applies it.
- */
 function resetFilter() {
   document.getElementById("filterType").value = "all";
   document.getElementById("startDate").value = "";
@@ -906,22 +788,14 @@ function resetFilter() {
   document.getElementById("filterMonth").value = "";
   document.getElementById("filterYear").value = "";
   currentFilter = { type: "all" };
-  toggleFilterOptions(); // This will also call applyFilter()
+  toggleFilterOptions();
   alert("Filter berhasil direset!");
 }
 
-/**
- * Downloads the currently filtered data as an Excel file.
- */
 function downloadFilteredData() {
-  downloadCSV(); // Re-use the existing downloadExcel function
+  downloadCSV();
 }
 
-/**
- * Returns the color code for a given transaction type.
- * @param {string} type - The type of transaction ('income', 'expense', 'transfer').
- * @returns {string} The hex color code.
- */
 function getTransactionColor(type) {
   return type === "income"
     ? "#27ae60"

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="CSS/style.css" />
+    <link rel="stylesheet" href="style.css" />
     <title>Pencatatan Keuangan</title>
   </head>
   <body>
@@ -12,9 +12,36 @@
         <h1>💰 Pencatatan Keuangan</h1>
         <p>Kelola keuangan Anda dengan mudah dan efisien</p>
       </div>
+      <br />
+      <!-- Summary -->
+      <div class="summary fade-in">
+        <div class="summary-card">
+          <h3>Total Pemasukan</h3>
+          <div class="amount income" id="totalIncome">Rp 0</div>
+          <small
+            id="periodIncome"
+            style="color: #7f8c8d; font-size: 0.8rem"
+          ></small>
+        </div>
+        <div class="summary-card">
+          <h3>Total Pengeluaran</h3>
+          <div class="amount expense" id="totalExpense">Rp 0</div>
+          <small
+            id="periodExpense"
+            style="color: #7f8c8d; font-size: 0.8rem"
+          ></small>
+        </div>
+        <div class="summary-card">
+          <h3>Saldo</h3>
+          <div class="amount balance" id="totalBalance">Rp 0</div>
+          <small
+            id="periodBalance"
+            style="color: #7f8c8d; font-size: 0.8rem"
+          ></small>
+        </div>
+      </div>
 
       <div class="content">
-        <!-- Manajemen Saldo Bank Digital -->
         <div class="form-section fade-in">
           <h2>💳 Manajemen Saldo Bank Digital</h2>
           <div class="form-group">
@@ -68,18 +95,12 @@
             </button>
           </div>
         </div>
-
-        <!-- Tampilan Saldo Bank -->
         <div class="bank-balances fade-in" id="bankBalancesSection">
           <div class="form-section">
             <h2>💳 Saldo Bank & E-Wallet</h2>
-            <div class="bank-grid" id="bankGrid">
-              <!-- Bank cards will be populated here -->
-            </div>
+            <div class="bank-grid" id="bankGrid"></div>
           </div>
         </div>
-
-        <!-- Form Input -->
         <div class="form-section fade-in">
           <h2>📝 Tambah Transaksi</h2>
           <form id="transactionForm">
@@ -229,34 +250,6 @@
           </div>
         </div>
 
-        <!-- Summary -->
-        <div class="summary fade-in">
-          <div class="summary-card">
-            <h3>Total Pemasukan</h3>
-            <div class="amount income" id="totalIncome">Rp 0</div>
-            <small
-              id="periodIncome"
-              style="color: #7f8c8d; font-size: 0.8rem"
-            ></small>
-          </div>
-          <div class="summary-card">
-            <h3>Total Pengeluaran</h3>
-            <div class="amount expense" id="totalExpense">Rp 0</div>
-            <small
-              id="periodExpense"
-              style="color: #7f8c8d; font-size: 0.8rem"
-            ></small>
-          </div>
-          <div class="summary-card">
-            <h3>Saldo</h3>
-            <div class="amount balance" id="totalBalance">Rp 0</div>
-            <small
-              id="periodBalance"
-              style="color: #7f8c8d; font-size: 0.8rem"
-            ></small>
-          </div>
-        </div>
-
         <!-- Tabel Transaksi -->
         <div class="table-container fade-in">
           <div class="table-header">
@@ -291,6 +284,6 @@
         </div>
       </div>
     </div>
-    <script src="JS/script.js"></script>
+    <script src="script.js"></script>
   </body>
 </html>
